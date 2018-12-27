@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+// Brought in from scalapb-runtime
+import "scalapb/scalapb.proto";
+
+package com.evernym.extension.agency.actor;
+
+message OwnerDIDSet {
+    option (scalapb.message).extends = "com.evernym.agent.common.actor.Event";
+    string DID = 1 [(scalapb.field).scala_name = "DID"];
+}
+
+message OwnerAgentDetailSet {
+    option (scalapb.message).extends = "com.evernym.agent.common.actor.Event";
+    string verKey = 1;
+}
+
+message OwnerPairwiseDIDSet {
+    option (scalapb.message).extends = "com.evernym.agent.common.actor.Event";
+    string DID = 1 [(scalapb.field).scala_name = "DID"];
+}
+
+message OwnerAgentPairwiseDetailSet {
+    option (scalapb.message).extends = "com.evernym.agent.common.actor.Event";
+    string agentId = 2;
+    string agentPairwiseVerKey = 5;
+}
