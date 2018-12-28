@@ -3,23 +3,21 @@ package com.evernym.extension.agency.msg_handler.actor
 import akka.Done
 import akka.actor.Props
 import com.evernym.agent.common.a2a.AuthCryptedMsg
-import com.evernym.agent.common.actor.{AgentActorCommonParam, PersistentActorBase}
+import com.evernym.agent.common.actor._
 import com.evernym.agent.common.util.Util.buildRouteJson
 import com.evernym.agent.common.wallet.{CreateNewKeyParam, StoreTheirKeyParam}
-
 import com.evernym.extension.agency.actor.{OwnerAgentDetailSet, OwnerDIDSet, OwnerPairwiseDIDSet}
-import com.evernym.extension.agency.common.{AgentCreatedRespMsg, InitAgent, JsonTransformationUtil}
 import com.evernym.extension.agency.common.Constants._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
 
 object AgencyAgent {
   def props(agentCommonParam: AgentActorCommonParam) = Props(new AgencyAgent(agentCommonParam))
 }
 
 class AgencyAgent(val agentActorCommonParam: AgentActorCommonParam)
-  extends PersistentActorBase with AgencyAgentActorCommon with JsonTransformationUtil {
+  extends PersistentActorBase
+    with AgencyAgentActorCommon with JsonTransformationUtil {
 
   var ownerDIDOpt: Option[String] = None
   var agentVerKeyOpt: Option[String] = None

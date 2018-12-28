@@ -4,8 +4,7 @@ import akka.persistence.PersistentActor
 import com.evernym.agent.common.actor.AgentActorCommon
 
 
-case class RouteDetail(persistenceId: String, actorTypeId: Int)
-
+case class ForId(id: String, msg: Any)
 
 trait AgencyAgentActorCommon extends AgentActorCommon { this: PersistentActor =>
 

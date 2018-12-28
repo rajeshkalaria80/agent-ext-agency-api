@@ -5,6 +5,12 @@ import "scalapb/scalapb.proto";
 
 package com.evernym.extension.agency.actor;
 
+message RouteSet {
+    option (scalapb.message).extends = "com.evernym.agent.common.actor.Event";
+    string agentId = 1;
+    string routeJson = 2;
+}
+
 message OwnerDIDSet {
     option (scalapb.message).extends = "com.evernym.agent.common.actor.Event";
     string DID = 1 [(scalapb.field).scala_name = "DID"];
