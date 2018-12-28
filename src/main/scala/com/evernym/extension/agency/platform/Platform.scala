@@ -1,6 +1,6 @@
 package com.evernym.extension.agency.platform
 
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.{ActorSystem, Props}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import com.evernym.agent.api.{AgentMsgHandler, CommonParam, ConfigProvider, TransportMsgRouter}
 import com.evernym.agent.common.a2a.{AgentToAgentAPI, DefaultAgentToAgentAPI}
@@ -13,6 +13,8 @@ import com.evernym.extension.agency.msg_handler.{AgencyAgentMsgHandler, DefaultR
 import com.evernym.extension.agency.msg_handler.actor.{AgencyAgent, AgencyAgentPairwise, ForId}
 import com.evernym.extension.agency.router.DefaultMsgRouter
 import com.evernym.extension.agency.transport.http.akka.AgencyAPI
+
+
 
 trait PlatformBase {
 

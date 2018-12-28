@@ -2,11 +2,13 @@ package com.evernym.extension.agency.msg_handler.actor
 
 import akka.Done
 import akka.actor.Props
-import com.evernym.agent.common.actor.{AgentActorCommonParam, OwnerAgentPairwiseDetail, PersistentActorBase}
+import com.evernym.agent.common.CommonConstants.{MSG_TYPE_GET_OWNER_AGENT_DETAIL, VERSION_1_0}
+import com.evernym.agent.common.a2a.AuthCryptedMsg
+import com.evernym.agent.common.actor._
 import com.evernym.agent.common.util.Util.buildRouteJson
 import com.evernym.agent.common.wallet.{CreateNewKeyParam, StoreTheirKeyParam}
-import com.evernym.extension.agency.actor.{OwnerAgentPairwiseDetailSet, OwnerDIDSet, OwnerPairwiseDIDSet}
 import com.evernym.extension.agency.common.Constants._
+import spray.json.RootJsonFormat
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -61,12 +63,32 @@ class AgencyAgentPairwise(val agentActorCommonParam: AgentActorCommonParam)
   }
 
 
+  def handleGetOwnerAgentDetail(): Unit = {
+    val acm = buildOwnerAgentDetailRespMsg(ownerDIDReq, entityId)
+    val respMsg = agentToAgentAPI.packAndAuthCrypt(buildPackAndAuthCryptParam(acm))(implParam[OwnerAgentDetailRespMsg])
+    sender ! AuthCryptedMsg(respMsg)
+  }
+
+  def handleAuthCryptedMsg(acm: AuthCryptedMsg): Unit = {
+    val (typedMsg, _) = agentToAgentAPI.authDecryptAndUnpack[AgentTypedMsg,
+      RootJsonFormat[AgentTypedMsg]](buildAuthDecryptParam(acm.payload))(implParam[AgentTypedMsg])
+
+    typedMsg.`@type` match {
+
+      case TypeDetail(MSG_TYPE_GET_OWNER_AGENT_DETAIL, VERSION_1_0, _) => handleGetOwnerAgentDetail()
+
+      case _ => throw new RuntimeException(s"msg $typedMsg not supported")
+    }
+  }
+
   override val receiveCommand: Receive = {
     case _: InitAgentForPairwiseKey if ownerDIDOpt.isDefined => sender ! Done
 
     case ia: InitAgentForPairwiseKey => initAgentForPairwiseKey(ia)
 
-    case GetAgentDetail => sender ! ownerAgentPairwiseDetail
+    case any: Any if ownerDIDOpt.isEmpty => throw new RuntimeException("agent not initialized yet")
+
+    case acm: AuthCryptedMsg => handleAuthCryptedMsg(acm)
 
   }
 }

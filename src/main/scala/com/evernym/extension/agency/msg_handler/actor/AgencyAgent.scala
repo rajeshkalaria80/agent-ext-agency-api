@@ -1,13 +1,15 @@
 package com.evernym.extension.agency.msg_handler.actor
 
 import akka.Done
+import akka.pattern.ask
 import akka.actor.Props
+import com.evernym.agent.common.CommonConstants.{MSG_TYPE_CREATE_PAIRWISE_KEY, MSG_TYPE_FWD, MSG_TYPE_GET_OWNER_AGENT_DETAIL, VERSION_1_0}
 import com.evernym.agent.common.a2a.AuthCryptedMsg
 import com.evernym.agent.common.actor._
-import com.evernym.agent.common.util.Util.buildRouteJson
+import com.evernym.agent.common.util.Util.{buildRouteJson, getNewEntityId}
 import com.evernym.agent.common.wallet.{CreateNewKeyParam, StoreTheirKeyParam}
-import com.evernym.extension.agency.actor.{OwnerAgentDetailSet, OwnerDIDSet, OwnerPairwiseDIDSet}
 import com.evernym.extension.agency.common.Constants._
+import spray.json.RootJsonFormat
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -17,7 +19,8 @@ object AgencyAgent {
 
 class AgencyAgent(val agentActorCommonParam: AgentActorCommonParam)
   extends PersistentActorBase
-    with AgencyAgentActorCommon with JsonTransformationUtil {
+    with AgencyAgentActorCommon
+    with ActorRefResolver {
 
   var ownerDIDOpt: Option[String] = None
   var agentVerKeyOpt: Option[String] = None
@@ -58,13 +61,75 @@ class AgencyAgent(val agentActorCommonParam: AgentActorCommonParam)
     }
   }
 
+
+  def createPairwiseKey(decryptedMsg: Array[Byte]): Unit = {
+    val cpkr = agentToAgentAPI.unpackMsg[CreateAgentPairwiseKeyReqMsg,
+      RootJsonFormat[CreateAgentPairwiseKeyReqMsg]](decryptedMsg)(implParam[CreateAgentPairwiseKeyReqMsg])
+    if (ownerAgentPairwiseDIDS.contains(cpkr.fromDID)) {
+      throw new RuntimeException("already added")
+    } else {
+      writeAndApply(OwnerPairwiseDIDSet(cpkr.fromDID))
+      val agentPairwiseId = getNewEntityId
+      val iaFut = agencyAgentPairwiseActorRef ? ForId(agentPairwiseId, InitAgentForPairwiseKey(ownerDIDReq, entityId, cpkr.fromDID, cpkr.fromDIDVerKey))
+      val sndr = sender()
+      iaFut map {
+        case oapds: OwnerAgentPairwiseDetailSet =>
+          val acm = buildPairwiseKeyCreatedRespMsg(agentPairwiseId, oapds.agentPairwiseVerKey)
+          val respMsg = agentToAgentAPI.packAndAuthCrypt(buildPackAndAuthCryptParam(acm))(implParam[PairwiseKeyCreatedRespMsg])
+          sndr ! AuthCryptedMsg(respMsg)
+      }
+    }
+  }
+
+  def handleGetOwnerAgentDetail(): Unit = {
+    val acm = buildOwnerAgentDetailRespMsg(ownerDIDReq, entityId)
+    val respMsg = agentToAgentAPI.packAndAuthCrypt(buildPackAndAuthCryptParam(acm))(implParam[OwnerAgentDetailRespMsg])
+    sender ! AuthCryptedMsg(respMsg)
+  }
+
+  def handleDecryptedMsg(decryptedMsg: Array[Byte]): Unit = {
+    val typedMsg = agentToAgentAPI.unpackMsg[AgentTypedMsg,
+      RootJsonFormat[AgentTypedMsg]](decryptedMsg)(implParam[AgentTypedMsg])
+
+    typedMsg.`@type` match {
+
+      case TypeDetail(MSG_TYPE_CREATE_PAIRWISE_KEY, VERSION_1_0, _) => createPairwiseKey(decryptedMsg)
+
+      case TypeDetail(MSG_TYPE_GET_OWNER_AGENT_DETAIL, VERSION_1_0, _) => handleGetOwnerAgentDetail()
+
+      case _ => throw new RuntimeException(s"msg $typedMsg not supported")
+    }
+  }
+
+  def handleFwdMsg(decryptedMsg: Array[Byte]): Unit = {
+    val fwdMsg = agentToAgentAPI.unpackMsg[FwdMsg, RootJsonFormat[FwdMsg]](decryptedMsg)(implParam[FwdMsg])
+
+    if (fwdMsg.fwd == entityId) {
+      handleDecryptedMsg(fwdMsg.msg)
+    } else {
+      agentActorCommonParam.routingAgent.fwdMsgToAgent(fwdMsg.fwd, AuthCryptedMsg(fwdMsg.msg), sender)
+    }
+  }
+
+  def handleAuthCryptedMsg(acm: AuthCryptedMsg): Unit = {
+    val (typedMsg, decryptedMsg) = agentToAgentAPI.authDecryptAndUnpack[AgentTypedMsg,
+      RootJsonFormat[AgentTypedMsg]](buildAuthDecryptParam(acm.payload))(implParam[AgentTypedMsg])
+
+    typedMsg.`@type` match {
+
+      case TypeDetail(MSG_TYPE_FWD, VERSION_1_0, _) => handleFwdMsg(decryptedMsg)
+
+      case _ => throw new RuntimeException(s"msg $typedMsg not supported")
+    }
+  }
+
   override val receiveCommand: Receive = {
 
     case _: InitAgent if ownerDIDOpt.isDefined => sender ! Done
 
     case ia: InitAgent => initAgent(ia)
 
-    case GetAgentDetail => sender ! agentVerKeyOpt
+    case acm: AuthCryptedMsg => handleAuthCryptedMsg(acm)
 
   }
 }

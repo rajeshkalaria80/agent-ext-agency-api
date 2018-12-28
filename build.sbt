@@ -60,10 +60,9 @@ lazy val commonLibraryDependencies = {
     akkaGrp %% "akka-http" % akka_http,
 
     //logging deps
-    "com.evernym" %% "agent-common" % "0.0.0",
+    "com.evernym" %% "agent-common" % "0.0.0" classifier "assembly",
 
     //persistence dependencies
-    akkaGrp %% "akka-persistence-cassandra" % "0.91",
     "org.iq80.leveldb" % "leveldb" % "0.10",
 
     //TODO: why this dependency was not inherited via agent-common dependency
@@ -178,9 +177,6 @@ def commonPackageSettings(targetRootPath: String) = Seq (
   }
 )
 
-//lazy val agentTestDeps = ProjectRef(uri("git://github.com/rajeshkalaria80/agent.git#agency-ext-poc"), "common")
-lazy val agentTestDeps = ProjectRef(uri("/home/rkalaria/dev/evernym/agent"), "common")
-
 lazy val agentExtAgencyApi = (project in file(".")).
   enablePlugins(DebianPlugin).
   settings(
@@ -193,7 +189,7 @@ lazy val agentExtAgencyApi = (project in file(".")).
     commonPackageSettings(s"$targetDirPathPrefix"),
     //libindy provides libindy.so
     debianPackageDependencies in Debian ++= Seq("default-jre", "libindy(>= 1.6.8)")
-  ).dependsOn(agentTestDeps % "test->test")
+  )
 
 
 Revolver.settings

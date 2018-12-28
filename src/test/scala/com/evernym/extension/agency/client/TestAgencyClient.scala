@@ -1,9 +1,8 @@
-package com.evernym.extension.agency
+package com.evernym.extension.agency.client
 
 import com.evernym.agent.common.a2a.{EncryptParam, GetVerKeyByDIDParam, ImplicitParam, KeyInfo}
 import com.evernym.agent.common.actor.AgentDetail
 import com.evernym.agent.common.CommonConstants._
-import com.evernym.agent.common.test.client.{DIDDetail, TestClientBase, TestFwdReqMsg, TestTypeDetail}
 import com.evernym.agent.common.wallet.CreateNewKeyParam
 import spray.json.RootJsonFormat
 
@@ -88,6 +87,7 @@ class TestAgencyClient extends TestClientBase {
 
   def handlePairwiseKeyCreatedRespMsg(forMyDID: String, rm: Array[Byte]): TestPairwiseKeyCreatedRespMsg = {
     val msg = authDecryptAndUnpackRespMsg[TestPairwiseKeyCreatedRespMsg](rm)
+    println("### pairwise key created: " + msg)
     setPairwiseAgentDetail(forMyDID, msg.agentPairwiseId, msg.agentPairwiseVerKey)
     msg
   }
@@ -101,7 +101,7 @@ class TestAgencyClient extends TestClientBase {
 
   def handleOwnerAgentDetailRespMsg(rm: Array[Byte]): TestOwnerAgentDetailRespMsg = {
     val msg = authDecryptAndUnpackRespMsg[TestOwnerAgentDetailRespMsg](rm)
-    println("### msg: " + msg)
+    println("### owner detail: " + msg)
     msg
   }
 

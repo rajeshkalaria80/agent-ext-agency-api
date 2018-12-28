@@ -1,4 +1,4 @@
-package com.evernym.extension.agency
+package com.evernym.extension.agency.spec
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes._
@@ -7,8 +7,8 @@ import akka.testkit.TestKit
 import com.evernym.agent.api.{CommonParam, ConfigProvider}
 import com.evernym.agent.common.actor.{InitAgent, JsonTransformationUtil}
 import com.evernym.agent.common.config.DefaultConfigProvider
-import com.evernym.agent.common.test.akka.AkkaTestBasic
-import com.evernym.agent.common.test.spec.RouteSpecCommon
+import com.evernym.extension.agency.akka.AkkaTestBasic
+import com.evernym.extension.agency.client.TestAgencyClient
 import com.evernym.extension.agency.transport.http.akka.Platform
 
 
@@ -45,20 +45,20 @@ class AgencySpec extends RouteSpecCommon with JsonTransformationUtil {
     }
   }
 
-//  it should "respond to get owner agent detail api call" in {
-//    val req = testClient.buildGetOwnerAgentDetailReq(testClient.myAgentDetail.id)
-//    testClient.buildPostAgentMsgReq(req) ~> route ~> check {
-//      status shouldBe OK
-//      testClient.handleOwnerAgentDetailRespMsg(responseAs[Array[Byte]])
-//    }
-//  }
-//
-//  it should "respond to get owner agent detail for pairwise key api call" in {
-//    val req = testClient.buildGetOwnerAgentDetailReq(testClient.pairwiseDIDDetails.head._2.agentPairwiseId)
-//    testClient.buildPostAgentMsgReq(req) ~> route ~> check {
-//      status shouldBe OK
-//      testClient.handleOwnerAgentDetailRespMsg(responseAs[Array[Byte]])
-//    }
-//  }
+  it should "respond to get owner agent detail api call" in {
+    val req = testClient.buildGetOwnerAgentDetailReq(testClient.myAgentDetail.id)
+    testClient.buildPostAgentMsgReq(req) ~> route ~> check {
+      status shouldBe OK
+      testClient.handleOwnerAgentDetailRespMsg(responseAs[Array[Byte]])
+    }
+  }
+
+  it should "respond to get owner agent detail for pairwise key api call" in {
+    val req = testClient.buildGetOwnerAgentDetailReq(testClient.pairwiseDIDDetails.head._2.agentPairwiseId)
+    testClient.buildPostAgentMsgReq(req) ~> route ~> check {
+      status shouldBe OK
+      testClient.handleOwnerAgentDetailRespMsg(responseAs[Array[Byte]])
+    }
+  }
 
 }

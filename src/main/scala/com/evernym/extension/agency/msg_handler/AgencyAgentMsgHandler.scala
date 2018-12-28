@@ -28,13 +28,14 @@ class DefaultRoutingAgent(implicit val param: CommonParam)
     val routeDetail = convertJsonToNativeMsg[RouteDetail](routeJson)
     routeDetail.actorTypeId match {
       case ACTOR_TYPE_USER_AGENT_REGION_ACTOR =>
-        agentActorRefReq(AGENCY_AGENT_REGION_ACTOR_NAME, s"$SHARDED_ACTOR_PATH_PREFIX/$AGENCY_AGENT_REGION_ACTOR_NAME")
-      case ACTOR_TYPE_USER_AGENT_PAIRWISE_REGION_ACTOR =>
-        agentActorRefReq(AGENCY_AGENT_PAIRWISE_REGION_ACTOR_NAME, s"$SHARDED_ACTOR_PATH_PREFIX/$AGENCY_AGENT_PAIRWISE_REGION_ACTOR_NAME")
-      case ACTOR_TYPE_AGENCY_AGENT_REGION_ACTOR =>
         agentActorRefReq(USER_AGENT_REGION_ACTOR_NAME, s"$SHARDED_ACTOR_PATH_PREFIX/$USER_AGENT_REGION_ACTOR_NAME")
-      case ACTOR_TYPE_AGENCY_AGENT_PAIRWISE_REGION_ACTOR =>
+      case ACTOR_TYPE_USER_AGENT_PAIRWISE_REGION_ACTOR =>
         agentActorRefReq(USER_AGENT_PAIRWISE_REGION_ACTOR_NAME, s"$SHARDED_ACTOR_PATH_PREFIX/$USER_AGENT_PAIRWISE_REGION_ACTOR_NAME")
+
+      case ACTOR_TYPE_AGENCY_AGENT_REGION_ACTOR =>
+        agentActorRefReq(AGENCY_AGENT_REGION_ACTOR_NAME, s"$SHARDED_ACTOR_PATH_PREFIX/$AGENCY_AGENT_REGION_ACTOR_NAME")
+      case ACTOR_TYPE_AGENCY_AGENT_PAIRWISE_REGION_ACTOR =>
+        agentActorRefReq(AGENCY_AGENT_PAIRWISE_REGION_ACTOR_NAME, s"$SHARDED_ACTOR_PATH_PREFIX/$AGENCY_AGENT_PAIRWISE_REGION_ACTOR_NAME")
     }
   }
 
@@ -49,7 +50,7 @@ class DefaultRoutingAgent(implicit val param: CommonParam)
   override def getRoute(forId: String): Future[Either[Throwable, String]] = {
     val futResp = routingAgent ? GetRoute(forId)
     futResp map {
-      case r: String => Right(r)
+      case Some(r: String) => Right(r)
       case x => Left(new RuntimeException(s"error while getting route: ${x.toString}"))
     }
   }
@@ -58,7 +59,7 @@ class DefaultRoutingAgent(implicit val param: CommonParam)
     getRoute(toId).flatMap {
       case Right(r: String) =>
         val actorRef = getTargetActorRef(r)
-        val futResp = actorRef ? msg
+        val futResp = actorRef ? ForId(toId, msg)
         futResp map {
           case r: Any => Right(r)
           case _ => Left(new RuntimeException(s"error while sending msg to route: $r"))
