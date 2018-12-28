@@ -3,8 +3,8 @@ package com.evernym.extension.agency.msg_handler.actor
 import akka.Done
 import akka.pattern.ask
 import akka.actor.Props
-import com.evernym.agent.common.CommonConstants.{MSG_TYPE_CREATE_PAIRWISE_KEY, MSG_TYPE_FWD, MSG_TYPE_GET_OWNER_AGENT_DETAIL, VERSION_1_0}
-import com.evernym.agent.common.a2a.AuthCryptedMsg
+import com.evernym.agent.common.CommonConstants._
+import com.evernym.agent.common.a2a.{AnonCryptedMsg, AuthCryptedMsg}
 import com.evernym.agent.common.actor._
 import com.evernym.agent.common.util.Util.{buildRouteJson, getNewEntityId}
 import com.evernym.agent.common.wallet.{CreateNewKeyParam, StoreTheirKeyParam}
@@ -65,12 +65,13 @@ class AgencyAgent(val agentActorCommonParam: AgentActorCommonParam)
   def createPairwiseKey(decryptedMsg: Array[Byte]): Unit = {
     val cpkr = agentToAgentAPI.unpackMsg[CreateAgentPairwiseKeyReqMsg,
       RootJsonFormat[CreateAgentPairwiseKeyReqMsg]](decryptedMsg)(implParam[CreateAgentPairwiseKeyReqMsg])
-    if (ownerAgentPairwiseDIDS.contains(cpkr.fromDID)) {
+    if (ownerAgentPairwiseDIDS.contains(cpkr.forDID)) {
       throw new RuntimeException("already added")
     } else {
-      writeAndApply(OwnerPairwiseDIDSet(cpkr.fromDID))
+      writeAndApply(OwnerPairwiseDIDSet(cpkr.forDID))
       val agentPairwiseId = getNewEntityId
-      val iaFut = agencyAgentPairwiseActorRef ? ForId(agentPairwiseId, InitAgentForPairwiseKey(ownerDIDReq, entityId, cpkr.fromDID, cpkr.fromDIDVerKey))
+      val msg = InitAgentForPairwiseKey(ownerDIDReq, entityId, cpkr.forDID, cpkr.forDIDVerKey)
+      val iaFut = agencyAgentPairwiseActorRef ? ForId(agentPairwiseId, msg)
       val sndr = sender()
       iaFut map {
         case oapds: OwnerAgentPairwiseDetailSet =>
@@ -87,25 +88,11 @@ class AgencyAgent(val agentActorCommonParam: AgentActorCommonParam)
     sender ! AuthCryptedMsg(respMsg)
   }
 
-  def handleDecryptedMsg(decryptedMsg: Array[Byte]): Unit = {
-    val typedMsg = agentToAgentAPI.unpackMsg[AgentTypedMsg,
-      RootJsonFormat[AgentTypedMsg]](decryptedMsg)(implParam[AgentTypedMsg])
-
-    typedMsg.`@type` match {
-
-      case TypeDetail(MSG_TYPE_CREATE_PAIRWISE_KEY, VERSION_1_0, _) => createPairwiseKey(decryptedMsg)
-
-      case TypeDetail(MSG_TYPE_GET_OWNER_AGENT_DETAIL, VERSION_1_0, _) => handleGetOwnerAgentDetail()
-
-      case _ => throw new RuntimeException(s"msg $typedMsg not supported")
-    }
-  }
-
   def handleFwdMsg(decryptedMsg: Array[Byte]): Unit = {
     val fwdMsg = agentToAgentAPI.unpackMsg[FwdMsg, RootJsonFormat[FwdMsg]](decryptedMsg)(implParam[FwdMsg])
 
     if (fwdMsg.fwd == entityId) {
-      handleDecryptedMsg(fwdMsg.msg)
+      handleAuthCryptedMsg(AuthCryptedMsg(fwdMsg.msg))
     } else {
       agentActorCommonParam.routingAgent.fwdMsgToAgent(fwdMsg.fwd, AuthCryptedMsg(fwdMsg.msg), sender)
     }
@@ -119,6 +106,22 @@ class AgencyAgent(val agentActorCommonParam: AgentActorCommonParam)
 
       case TypeDetail(MSG_TYPE_FWD, VERSION_1_0, _) => handleFwdMsg(decryptedMsg)
 
+      case TypeDetail(MSG_TYPE_CREATE_PAIRWISE_KEY, VERSION_1_0, _) => createPairwiseKey(decryptedMsg)
+
+      case TypeDetail(MSG_TYPE_GET_OWNER_AGENT_DETAIL, VERSION_1_0, _) => handleGetOwnerAgentDetail()
+
+      case _ => throw new RuntimeException(s"msg $typedMsg not supported")
+    }
+  }
+
+  def handleAnonCryptedMsg(acm: AnonCryptedMsg): Unit = {
+    val (typedMsg, unsealedMsg) = agentToAgentAPI.anonDecryptAndUnpack[AgentTypedMsg,
+      RootJsonFormat[AgentTypedMsg]](buildAnonDecryptParam(acm.payload))(implParam[AgentTypedMsg])
+
+    typedMsg.`@type` match {
+
+      case TypeDetail(MSG_TYPE_FWD, VERSION_1_0, _) => handleFwdMsg(unsealedMsg)
+
       case _ => throw new RuntimeException(s"msg $typedMsg not supported")
     }
   }
@@ -129,7 +132,7 @@ class AgencyAgent(val agentActorCommonParam: AgentActorCommonParam)
 
     case ia: InitAgent => initAgent(ia)
 
-    case acm: AuthCryptedMsg => handleAuthCryptedMsg(acm)
+    case acm: AnonCryptedMsg => handleAnonCryptedMsg(acm)
 
   }
 }

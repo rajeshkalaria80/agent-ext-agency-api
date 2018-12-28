@@ -7,7 +7,7 @@ import com.evernym.agent.common.a2a.{AgentToAgentAPI, DefaultAgentToAgentAPI}
 import com.evernym.agent.common.actor.AgentActorCommonParam
 import com.evernym.agent.common.libindy.LedgerPoolConnManager
 import com.evernym.agent.common.util.Util.buildWalletConfig
-import com.evernym.agent.common.wallet.{LibIndyWalletProvider, WalletAPI, WalletConfig}
+import com.evernym.agent.common.wallet.{LibIndyWalletProvider, WalletAPI, WalletConfig, WalletProvider}
 import com.evernym.extension.agency.common.Constants._
 import com.evernym.extension.agency.msg_handler.{AgencyAgentMsgHandler, DefaultRoutingAgent}
 import com.evernym.extension.agency.msg_handler.actor.{AgencyAgent, AgencyAgentPairwise, ForId}
@@ -15,6 +15,7 @@ import com.evernym.extension.agency.router.DefaultMsgRouter
 import com.evernym.extension.agency.transport.http.akka.AgencyAPI
 
 
+class DefaultWalletAPI(val walletProvider: WalletProvider, val ledgerPoolManager: LedgerPoolConnManager) extends WalletAPI
 
 trait PlatformBase {
 
@@ -40,7 +41,7 @@ trait PlatformBase {
 
   lazy val poolConnManager: LedgerPoolConnManager = new LedgerPoolConnManager(configProvider)
 
-  lazy val walletAPI: WalletAPI = new WalletAPI(new LibIndyWalletProvider(configProvider), poolConnManager)
+  lazy val walletAPI: WalletAPI = new DefaultWalletAPI(new LibIndyWalletProvider(configProvider), poolConnManager)
 
   lazy val walletConfig: WalletConfig = buildWalletConfig(configProvider)
 

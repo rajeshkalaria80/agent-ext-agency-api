@@ -22,4 +22,7 @@ object Constants {
   val ACTOR_DISPATCHER_NAME_USER_AGENT = s"$ACTOR_DISPATCHER_NAME.user-agent-dispatcher"
   val ACTOR_DISPATCHER_NAME_USER_AGENT_PAIRWISE = s"$ACTOR_DISPATCHER_NAME.user-agent-pairwise-dispatcher"
 
+
+  val MSG_TYPE_CREATE_AGENT = "CREATE_AGENT"
+
 }

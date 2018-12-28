@@ -12,7 +12,7 @@ import akka.http.scaladsl.server.Directives.{complete, logRequestResult, options
 import akka.http.scaladsl.server.{Directive0, Route}
 import akka.stream.Materializer
 import com.evernym.agent.api._
-import com.evernym.agent.common.a2a.AuthCryptedMsg
+import com.evernym.agent.common.a2a.{AnonCryptedMsg, AuthCryptedMsg}
 import com.evernym.agent.common.actor.{InitAgent, JsonTransformationUtil}
 import com.evernym.extension.agency.platform.PlatformBase
 
@@ -43,7 +43,6 @@ trait CorsSupport {
     preFlightRequestHandler ~ r
   }
 }
-
 
 class AgencyAPI(commonParam: CommonParam, val transportMsgRouter: TransportMsgRouter)
   extends Transport with CorsSupport
@@ -79,7 +78,7 @@ class AgencyAPI(commonParam: CommonParam, val transportMsgRouter: TransportMsgRo
                 case MediaTypes.`application/octet-stream` =>
                   entity(as[Array[Byte]]) { data =>
                     complete {
-                      transportMsgRouter.handleMsg(TransportAgnosticMsg(AuthCryptedMsg(data))).map[ToResponseMarshallable] {
+                      transportMsgRouter.handleMsg(TransportAgnosticMsg(AnonCryptedMsg(data))).map[ToResponseMarshallable] {
                         msgResponseHandler
                       }
                     }

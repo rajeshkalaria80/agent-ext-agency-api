@@ -1,5 +1,7 @@
 package com.evernym.extension.agency.client
 
+import java.util.UUID
+
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model._
 import com.evernym.agent.api.ConfigProvider
@@ -10,6 +12,7 @@ import com.evernym.agent.common.util.TransformationUtilBase
 import com.evernym.agent.common.util.Util._
 import com.evernym.agent.common.CommonConstants._
 import com.evernym.agent.common.wallet._
+import com.evernym.extension.agency.platform.DefaultWalletAPI
 import com.typesafe.config.{Config, ConfigFactory}
 import spray.json.RootJsonFormat
 
@@ -38,7 +41,7 @@ trait TestClientBase extends TestJsonTransformationUtil {
   val configProvider: ConfigProvider = TestClientConfigProvider
   val walletProvider: WalletProvider = new LibIndyWalletProvider(configProvider)
   val ledgerPoolMngr: LedgerPoolConnManager = new LedgerPoolConnManager(configProvider)
-  val walletAPI: WalletAPI = new WalletAPI(walletProvider, ledgerPoolMngr)
+  val walletAPI: WalletAPI = new DefaultWalletAPI(walletProvider, ledgerPoolMngr)
 
   val defaultA2AAPI: AgentToAgentAPI = new DefaultAgentToAgentAPI(walletAPI)
 
@@ -50,7 +53,7 @@ trait TestClientBase extends TestJsonTransformationUtil {
   def agentMsgPath: String
 
   def init(): Unit = {
-    val wn = "test-client-00000000000000000000"
+    val wn = UUID.randomUUID().toString.replace("-", "")
     val wc = buildWalletConfig(configProvider)
     val key = walletAPI.generateWalletKey(Option(wn))
 
@@ -107,6 +110,10 @@ trait TestClientBase extends TestJsonTransformationUtil {
         KeyInfo(Left(forAgentVerKey))
       )
     AuthCryptApplyParam(data, encryptParam, walletInfo)
+  }
+
+  def buildAnonCryptParam(forAgencyVerKey: String, data: Array[Byte]): AnonCryptApplyParam = {
+    AnonCryptApplyParam(KeyInfo(Left(forAgencyVerKey)), data, walletInfo)
   }
 
   def buildAuthDecryptParam(data: Array[Byte]): AuthCryptUnapplyParam = {
