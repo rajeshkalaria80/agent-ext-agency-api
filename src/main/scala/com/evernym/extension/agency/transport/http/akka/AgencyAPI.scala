@@ -13,7 +13,8 @@ import akka.http.scaladsl.server.{Directive0, Route}
 import akka.stream.Materializer
 import com.evernym.agent.api._
 import com.evernym.agent.common.a2a.{AnonCryptedMsg, AuthCryptedMsg}
-import com.evernym.agent.common.actor.{InitAgent, JsonTransformationUtil}
+import com.evernym.agent.common.actor.{AgentDetail, InitAgent}
+import com.evernym.extension.agency.common.AgencyJsonTransformationUtil
 import com.evernym.extension.agency.platform.PlatformBase
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -46,7 +47,7 @@ trait CorsSupport {
 
 class AgencyAPI(commonParam: CommonParam, val transportMsgRouter: TransportMsgRouter)
   extends Transport with CorsSupport
-    with JsonTransformationUtil {
+    with AgencyJsonTransformationUtil {
 
   override def configProvider: ConfigProvider = commonParam.configProvider
   implicit def system: ActorSystem = commonParam.actorSystem
@@ -55,8 +56,8 @@ class AgencyAPI(commonParam: CommonParam, val transportMsgRouter: TransportMsgRo
   implicit val executor: ExecutionContextExecutor = commonParam.actorSystem.dispatcher
 
   def msgResponseHandler: PartialFunction[Any, ToResponseMarshallable] = {
-    case a2aMsg: AuthCryptedMsg =>
-      HttpEntity(MediaTypes.`application/octet-stream`, a2aMsg.payload)
+    case ad: AgentDetail => ad
+    case a2aMsg: AuthCryptedMsg => HttpEntity(MediaTypes.`application/octet-stream`, a2aMsg.payload)
   }
 
   lazy val route: Route = logRequestResult("agent-ext-agency-api") {

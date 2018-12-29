@@ -10,7 +10,6 @@ import com.evernym.agent.common.config.ConfigProviderBase
 import com.evernym.agent.common.libindy.LedgerPoolConnManager
 import com.evernym.agent.common.util.TransformationUtilBase
 import com.evernym.agent.common.util.Util._
-import com.evernym.agent.common.CommonConstants._
 import com.evernym.agent.common.wallet._
 import com.evernym.extension.agency.platform.DefaultWalletAPI
 import com.typesafe.config.{Config, ConfigFactory}
@@ -26,8 +25,6 @@ case class TestTypeDetail(name: String, ver: String, fmt: Option[String]=None)
 case class TestFwdReqMsg(`@type`: TestTypeDetail, fwd: String, msg: Array[Byte])
 
 trait TestJsonTransformationUtil extends TransformationUtilBase {
-
-  implicit val version: String = VERSION_1_0
 
   implicit val testTypeDetailMsg: RootJsonFormat[TestTypeDetail] = jsonFormat3(TestTypeDetail.apply)
   implicit val testFwdMsg: RootJsonFormat[TestFwdReqMsg] = jsonFormat3(TestFwdReqMsg.apply)
@@ -48,7 +45,9 @@ trait TestClientBase extends TestJsonTransformationUtil {
   var walletAccessDetail: WalletAccessDetail = _
   implicit var walletInfo: WalletInfo = _
 
-  var myDIDDetail: DIDDetail = _
+  var agencyOwnerDIDDetail: DIDDetail = _
+
+  var userDIDDetail: DIDDetail = _
 
   def agentMsgPath: String
 
@@ -61,10 +60,13 @@ trait TestClientBase extends TestJsonTransformationUtil {
     walletInfo = WalletInfo(wn, Right(walletAccessDetail))
 
     walletAPI.walletProvider.delete(wn, key, wc)
-
     walletAPI.createAndOpenWallet(walletAccessDetail)
-    val newKey = walletAPI.createNewKey(CreateNewKeyParam())(walletInfo)
-    myDIDDetail = DIDDetail(newKey.DID, newKey.verKey)
+
+    val agencyOwnerKey = walletAPI.createNewKey(CreateNewKeyParam())(walletInfo)
+    agencyOwnerDIDDetail = DIDDetail(agencyOwnerKey.DID, agencyOwnerKey.verKey)
+
+    val userKey = walletAPI.createNewKey(CreateNewKeyParam())(walletInfo)
+    userDIDDetail = DIDDetail(userKey.DID, userKey.verKey)
   }
 
   init()
@@ -101,12 +103,12 @@ trait TestClientBase extends TestJsonTransformationUtil {
     buildReq(HttpMethods.GET, path)
   }
 
-  def myDID: String = myDIDDetail.DID
+  def myDID: String = userDIDDetail.DID
 
   def buildAuthCryptParam(forAgentVerKey: String, data: Array[Byte]): AuthCryptApplyParam = {
     val encryptParam =
       EncryptParam(
-        KeyInfo(Left(myDIDDetail.verKey)),
+        KeyInfo(Left(userDIDDetail.verKey)),
         KeyInfo(Left(forAgentVerKey))
       )
     AuthCryptApplyParam(data, encryptParam, walletInfo)
@@ -117,7 +119,7 @@ trait TestClientBase extends TestJsonTransformationUtil {
   }
 
   def buildAuthDecryptParam(data: Array[Byte]): AuthCryptUnapplyParam = {
-    val decryptParam = DecryptParam(KeyInfo(Left(myDIDDetail.verKey)))
+    val decryptParam = DecryptParam(KeyInfo(Left(userDIDDetail.verKey)))
     AuthCryptUnapplyParam(data, decryptParam, walletInfo)
   }
 

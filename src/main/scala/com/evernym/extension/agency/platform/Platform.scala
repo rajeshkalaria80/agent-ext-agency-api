@@ -4,7 +4,7 @@ import akka.actor.{ActorSystem, Props}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import com.evernym.agent.api.{AgentMsgHandler, CommonParam, ConfigProvider, TransportMsgRouter}
 import com.evernym.agent.common.a2a.{AgentToAgentAPI, DefaultAgentToAgentAPI}
-import com.evernym.agent.common.actor.AgentActorCommonParam
+import com.evernym.agent.common.actor.{AgentActorCommonParam, UserAgent, UserAgentPairwise}
 import com.evernym.agent.common.libindy.LedgerPoolConnManager
 import com.evernym.agent.common.util.Util.buildWalletConfig
 import com.evernym.agent.common.wallet.{LibIndyWalletProvider, WalletAPI, WalletConfig, WalletProvider}
@@ -52,7 +52,7 @@ trait PlatformBase {
 
   ClusterSharding(system).start(
     typeName = AGENCY_AGENT_REGION_ACTOR_NAME,
-    entityProps = buildProp(Props(new AgencyAgent(agentCommonParam)), Option(ACTOR_DISPATCHER_NAME_AGENT_AGENT)),
+    entityProps = buildProp(Props(new AgencyAgent(agentCommonParam)), Option(ACTOR_DISPATCHER_NAME_AGENCY_AGENT)),
     settings = ClusterShardingSettings(system),
     extractEntityId = {
       case ForId(id, cmd) ⇒ (id, cmd)
@@ -63,7 +63,29 @@ trait PlatformBase {
 
   ClusterSharding(system).start(
     typeName = AGENCY_AGENT_PAIRWISE_REGION_ACTOR_NAME,
-    entityProps = buildProp(Props(new AgencyAgentPairwise(agentCommonParam)), Option(ACTOR_DISPATCHER_NAME_AGENT_AGENT_PAIRWISE)),
+    entityProps = buildProp(Props(new AgencyAgentPairwise(agentCommonParam)), Option(ACTOR_DISPATCHER_NAME_AGENCY_AGENT_PAIRWISE)),
+    settings = ClusterShardingSettings(system),
+    extractEntityId = {
+      case ForId(id, cmd) ⇒ (id, cmd)
+    },
+    extractShardId = {
+      case ForId(id, _) ⇒ getShardId(id)
+    })
+
+  ClusterSharding(system).start(
+    typeName = USER_AGENT_REGION_ACTOR_NAME,
+    entityProps = buildProp(Props(new UserAgent(agentCommonParam)), Option(ACTOR_DISPATCHER_NAME_USER_AGENT)),
+    settings = ClusterShardingSettings(system),
+    extractEntityId = {
+      case ForId(id, cmd) ⇒ (id, cmd)
+    },
+    extractShardId = {
+      case ForId(id, _) ⇒ getShardId(id)
+    })
+
+  ClusterSharding(system).start(
+    typeName = USER_AGENT_PAIRWISE_REGION_ACTOR_NAME,
+    entityProps = buildProp(Props(new UserAgentPairwise(agentCommonParam)), Option(ACTOR_DISPATCHER_NAME_USER_AGENT_PAIRWISE)),
     settings = ClusterShardingSettings(system),
     extractEntityId = {
       case ForId(id, cmd) ⇒ (id, cmd)

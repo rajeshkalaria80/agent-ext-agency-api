@@ -28,6 +28,22 @@ message OwnerPairwiseDIDSet {
 
 message OwnerAgentPairwiseDetailSet {
     option (scalapb.message).extends = "com.evernym.agent.common.actor.Event";
-    string agentId = 2;
-    string agentPairwiseVerKey = 5;
+    string agentId = 1;
+    string agentPairwiseVerKey = 2;
+}
+
+message UserConnected {
+    option (scalapb.message).extends = "com.evernym.agent.common.actor.Event";
+    string DID = 1 [(scalapb.field).scala_name = "DID"];
+}
+
+message UserAgencyPairwiseAgentIdSet {
+    option (scalapb.message).extends = "com.evernym.agent.common.actor.Event";
+    string userDID = 1 [(scalapb.field).scala_name = "DID"];
+    string agencyPairwiseAgentId = 2;
+}
+
+message UserAgentCreated {
+    option (scalapb.message).extends = "com.evernym.agent.common.actor.Event";
+    string agentId = 1;
 }

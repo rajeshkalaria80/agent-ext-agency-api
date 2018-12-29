@@ -2,8 +2,9 @@ package com.evernym.extension.agency.msg_handler.actor
 
 import akka.actor.ActorRef
 import akka.persistence.PersistentActor
-import com.evernym.agent.common.a2a.{AnonCryptUnapplyParam, GetVerKeyByDIDParam, KeyInfo}
-import com.evernym.agent.common.actor.{ActorRefResolver, AgentActorCommon, JsonTransformationUtil}
+import com.evernym.agent.common.a2a.{AnonCryptUnapplyParam, KeyInfo}
+import com.evernym.agent.common.actor.{ActorRefResolver, AgentActorCommon}
+import com.evernym.extension.agency.common.AgencyJsonTransformationUtil
 import com.evernym.extension.agency.common.Constants._
 
 
@@ -11,7 +12,7 @@ case class ForId(id: String, msg: Any)
 
 
 trait AgencyAgentActorCommon extends AgentActorCommon
-  with JsonTransformationUtil with ActorRefResolver { this: PersistentActor =>
+  with AgencyJsonTransformationUtil with ActorRefResolver { this: PersistentActor =>
 
   lazy val agencyAgentActorRef: ActorRef =
     agentActorRefReq(AGENCY_AGENT_REGION_ACTOR_NAME,

@@ -4,6 +4,7 @@ import akka.actor.ActorRef
 import akka.pattern.ask
 import com.evernym.agent.api.{AgentMsgHandler, CommonParam, RoutingAgent, TransportAgnosticMsg}
 import com.evernym.agent.common.actor._
+import com.evernym.extension.agency.common.AgencyJsonTransformationUtil
 import com.evernym.extension.agency.common.Constants._
 import com.evernym.extension.agency.msg_handler.actor.ForId
 
@@ -13,7 +14,7 @@ import scala.concurrent.Future
 
 class DefaultRoutingAgent(implicit val param: CommonParam)
   extends RoutingAgent
-    with JsonTransformationUtil
+    with AgencyJsonTransformationUtil
     with ActorRefResolver {
 
   val ACTOR_TYPE_USER_AGENT_REGION_ACTOR = 1
