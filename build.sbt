@@ -48,19 +48,32 @@ def commonTestSettings(projectName: String) = Seq (
   testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-h", s"target/test-reports/$projectName")
 )
 
+val akkaGrp = "com.typesafe.akka"
+
 lazy val commonLibraryDependencies = {
 
-  val akkaGrp = "com.typesafe.akka"
+  val coreDeps = Seq.apply(
+    "com.evernym" %% "agent-common" % "0.0.0" classifier "assembly"
+  )
+
+  //test dependencies
+  val testDeps = Seq(
+    //persistence for tests
+    "org.scalatest" % "scalatest_2.12" % scala_test,
+    "org.pegdown" % "pegdown" % "1.6.0",
+    "org.mockito" % "mockito-all" % "1.9.5",
+    akkaGrp %% "akka-testkit" % akka
+  ).map(_ % "test")
+
+  coreDeps ++ testDeps
+
+}
+
+lazy val agentLibraryDependencies = {
 
   //akka related
   val coreDeps = Seq.apply(
-    akkaGrp %% "akka-stream" % akka,
     akkaGrp %% "akka-cluster-sharding" % akka,
-
-    akkaGrp %% "akka-http" % akka_http,
-
-    //logging deps
-    "com.evernym" %% "agent-common" % "0.0.0" classifier "assembly",
 
     //persistence dependencies
     "org.iq80.leveldb" % "leveldb" % "0.10",
@@ -73,15 +86,29 @@ lazy val commonLibraryDependencies = {
   val testDeps = Seq(
     //persistence for tests
     "org.iq80.leveldb" % "leveldb" % "0.7", //to be used in E2E tests
-    "org.scalatest" % "scalatest_2.12" % scala_test,
-    "org.pegdown" % "pegdown" % "1.6.0",
-    "org.mockito" % "mockito-all" % "1.9.5",
-    "org.abstractj.kalium" % "kalium" % "0.8.0",        // java binding for nacl
-    akkaGrp %% "akka-testkit" % akka ,
+    akkaGrp %% "akka-testkit" % akka
+  ).map(_ % "test")
+
+  commonLibraryDependencies ++ coreDeps ++ testDeps
+
+}
+
+lazy val transportLibraryDependencies = {
+
+  //akka related
+  val coreDeps = Seq.apply(
+    akkaGrp %% "akka-actor" % akka,
+    akkaGrp %% "akka-stream" % akka,
+    akkaGrp %% "akka-http" % akka_http
+  )
+
+  //test dependencies
+  val testDeps = Seq(
+    //persistence for tests
     akkaGrp %% "akka-http-testkit" % akka_http
   ).map(_ % "test")
 
-  coreDeps ++ testDeps
+  commonLibraryDependencies ++ coreDeps ++ testDeps
 
 }
 
@@ -177,20 +204,46 @@ def commonPackageSettings(targetRootPath: String) = Seq (
   }
 )
 
-lazy val agentExtAgencyApi = (project in file(".")).
+lazy val common = (project in file("common")).
   enablePlugins(DebianPlugin).
   settings(
-    name := "agent-ext-agency-api",
-    packageSummary := "agent-ext-agency-api",
-    packageDescription := "Scala and Akka package to run agency api",
+    name := "agent-ext-agency-common",
     libraryDependencies ++= commonLibraryDependencies,
-    commonTestSettings("agent-ext-agency-api"),
+    commonTestSettings("agent-ext-agency-common"),
     commonSettings,
     commonPackageSettings(s"$targetDirPathPrefix"),
     //libindy provides libindy.so
     debianPackageDependencies in Debian ++= Seq("default-jre", "libindy(>= 1.6.8)")
   )
 
+lazy val businessPlatform = (project in file("business-platform")).
+  enablePlugins(DebianPlugin).
+  settings(
+    name := "agent-ext-agency-business-platform",
+    packageSummary := "agent-ext-agency-business-platform",
+    packageDescription := "Scala and Akka package to run agency agent",
+    libraryDependencies ++= agentLibraryDependencies,
+    commonTestSettings("agent-ext-agency-business-platform"),
+    commonSettings,
+    commonPackageSettings(s"$targetDirPathPrefix"),
+    //libindy provides libindy.so
+    debianPackageDependencies in Debian ++= Seq("default-jre", "libindy(>= 1.6.8)")
+  ).dependsOn(common % "test -> test; compile -> compile")
+
+
+lazy val transportPlatform = (project in file("transport-platform")).
+  enablePlugins(DebianPlugin).
+  settings(
+    name := "agent-ext-agency-transport-platform",
+    packageSummary := "agent-ext-agency-transport-platform",
+    packageDescription := "Scala and Akka package to run agency transport",
+    libraryDependencies ++= transportLibraryDependencies,
+    commonTestSettings("agent-ext-agency-transport-platform"),
+    commonSettings,
+    commonPackageSettings(s"$targetDirPathPrefix"),
+    //libindy provides libindy.so
+    debianPackageDependencies in Debian ++= Seq("default-jre")
+  ).dependsOn(common % "test -> test; compile -> compile")
 
 Revolver.settings
 
