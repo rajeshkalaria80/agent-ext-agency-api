@@ -10,7 +10,7 @@ import com.evernym.agent.common.CommonConstants._
 import com.evernym.extension.agency.agent.akka.AkkaTestBasic
 import com.evernym.extension.agency.agent.client.TestAgencyClient
 import com.evernym.extension.agency.common.Constants._
-import com.evernym.extension.agency.platform.business.AgencyBusinessPlatform
+import com.evernym.extension.agency.platform.business.{AgencyBusinessPlatform, AgencyBusinessPlatformExtension}
 import org.scalatest.{Assertion, AsyncFlatSpec}
 
 import scala.concurrent.Future
@@ -50,6 +50,8 @@ class AgencyBusinessPlatformSpec extends AsyncFlatSpec with SpecCommon with Test
   }
 
   it should "respond to init agent api call" in {
+    val abpe = new AgencyBusinessPlatformExtension()
+    abpe.start()
     val req = InitAgent(agencyOwnerDIDDetail.DID, agencyOwnerDIDDetail.verKey)
     sendAgencyInitMsgToAgencyAgent(req, { respPayload =>
         val respMsg = handleAgencyDetailRespMsg(respPayload)

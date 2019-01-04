@@ -9,7 +9,7 @@ import com.evernym.agent.api._
 import com.evernym.agent.common.a2a.{AgentToAgentAPI, DefaultAgentToAgentAPI}
 import com.evernym.agent.common.actor._
 import com.evernym.agent.common.libindy.LedgerPoolConnManager
-import com.evernym.agent.common.util.Util.createWalletConfig
+import com.evernym.agent.common.util.Util._
 import com.evernym.agent.common.wallet._
 import com.evernym.extension.agency.common.Constants._
 import com.evernym.extension.agency.platform.business.actor.{AgencyActorRefResolver, AgencyAgent, AgencyAgentPairwise, ForId}
@@ -123,8 +123,11 @@ class AgencyBusinessPlatformExtension extends Extension {
   override def getSupportedMsgTypes: Set[MsgType] = Set.empty
 
   override def start(inputParam: Option[Any]=None): Unit = {
-    val commonParam: CommonParam = inputParam.map(_.asInstanceOf[CommonParam]).getOrElse(
-      throw new RuntimeException("invalid input parameter"))
+//    val commonParam: CommonParam = inputParam.map(_.asInstanceOf[CommonParam]).getOrElse(
+//      throw new RuntimeException("invalid input parameter"))
+    val commonParam: CommonParam = buildDefaultCommonParam("test")
+    val cv = commonParam.actorSystem.settings.config.getValue("akka")
+    println("### path 1: " + cv.origin().description())
     agencyAgentPlatform = new AgencyBusinessPlatform(commonParam)
     agencyAgentPlatform.start()
   }
