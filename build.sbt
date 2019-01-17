@@ -216,14 +216,14 @@ lazy val common = (project in file("common")).
     debianPackageDependencies in Debian ++= Seq("default-jre", "libindy(>= 1.6.8)")
   )
 
-lazy val businessPlatform = (project in file("business-platform")).
+lazy val businessProtocol = (project in file("business-protocol")).
   enablePlugins(DebianPlugin).
   settings(
-    name := "agent-ext-agency-business-platform",
-    packageSummary := "agent-ext-agency-business-platform",
+    name := "extension-agency-business-protocol",
+    packageSummary := "extension-agency-business-protocol",
     packageDescription := "Scala and Akka package to run agency agent",
     libraryDependencies ++= agentLibraryDependencies,
-    commonTestSettings("agent-ext-agency-business-platform"),
+    commonTestSettings("extension-agency-business-protocol"),
     commonSettings,
     commonPackageSettings(s"$targetDirPathPrefix"),
     //libindy provides libindy.so
@@ -231,14 +231,14 @@ lazy val businessPlatform = (project in file("business-platform")).
   ).dependsOn(common % "test -> test; compile -> compile")
 
 
-lazy val transportPlatform = (project in file("transport-platform")).
+lazy val transportProtocol = (project in file("transport-protocol")).
   enablePlugins(DebianPlugin).
   settings(
-    name := "agent-ext-agency-transport-platform",
-    packageSummary := "agent-ext-agency-transport-platform",
+    name := "extension-agency-transport-protocol",
+    packageSummary := "extension-agency-transport-protocol",
     packageDescription := "Scala and Akka package to run agency transport",
     libraryDependencies ++= transportLibraryDependencies,
-    commonTestSettings("agent-ext-agency-transport-platform"),
+    commonTestSettings("extension-agency-transport-protocol"),
     commonSettings,
     commonPackageSettings(s"$targetDirPathPrefix"),
     //libindy provides libindy.so

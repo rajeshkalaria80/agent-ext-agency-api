@@ -1,2 +1,0 @@
-ext-class: com.evernym.extension.agency.platform.transport.AgencyTransportPlatformExtension
-
