@@ -52,9 +52,9 @@ class AgencyBusinessProtocolSpec extends AsyncFlatSpec with SpecCommon with Test
   it should "respond to init agent api call" in {
     val req = InitAgent(agencyOwnerDIDDetail.DID, agencyOwnerDIDDetail.verKey)
     sendAgencyInitMsgToAgencyAgent(req, { respPayload =>
-        val respMsg = handleAgencyDetailRespMsg(respPayload)
-        respMsg.id.isEmpty shouldBe false
-      })
+      val respMsg = handleAgencyDetailRespMsg(respPayload)
+      respMsg.id.isEmpty shouldBe false
+    })
   }
 
   it should "respond to connect api call" in {
@@ -73,15 +73,15 @@ class AgencyBusinessProtocolSpec extends AsyncFlatSpec with SpecCommon with Test
     })
   }
 
-  it should "respond create agent" in {
-    val req = buildCreateAgentReq()
+  it should "respond to create user agent api call" in {
+    val req = buildCreateUserAgentReq()
     sendAnonCryptedMsgToCoreAgent(req, { respPayload =>
       val respMsg = handleAgentCratedRespMsg(respPayload)
       respMsg.`@type`.name shouldBe MSG_TYPE_AGENT_CREATED
     })
   }
 
-  it should "respond to create pairwise key api call" in {
+  it should "respond to create user pairwise key api call" in {
     val (didDetail, req) = buildCreatePairwiseKeyReq()
     sendAnonCryptedMsgToCoreAgent(req, { respPayload =>
       val respMsg = handlePairwiseKeyCreatedRespMsg(didDetail.DID, respPayload)

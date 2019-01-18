@@ -125,7 +125,7 @@ trait TestAgencyClient extends TestClientBase {
     msg
   }
 
-  def buildCreateAgentReq(): Array[Byte] = {
+  def buildCreateUserAgentReq(): Array[Byte] = {
     val nativeMsg = TestCreateAgentReqMsg(TestTypeDetail(MSG_TYPE_CREATE_AGENT, version), userDIDDetail.DID, userDIDDetail.verKey)
     val packedMsg = defaultA2AAPI.packMsg(nativeMsg)(ImplicitParam[RootJsonFormat[TestCreateAgentReqMsg]](implicitly))
     buildAnonCryptedFwdMsgForAgency(myAgencyAgentPairwiseDetail.agentPairwiseId, packedMsg)
