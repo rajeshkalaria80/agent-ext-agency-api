@@ -1,13 +1,14 @@
-package com.evernym.extension.agency.protocol.agent
+package com.evernym.agency
 
-import com.evernym.agent.api._
+import com.evernym.agent.api.{Agent, AgentOrchestrator, CommonParam}
+
 
 import scala.concurrent.Future
 
 
-class AgencyAgentWrapper(val commonParam: CommonParam) extends Agent {
+class AgencyAgentApp(val commonParam: CommonParam) extends Agent {
 
-  lazy val agentOrchestrator: AgentOrchestrator = new AgencyBusinessProtocolOrchestrator(commonParam)
+  lazy val agentOrchestrator: AgentOrchestrator = new AgencyAgentOrchestrator(commonParam)
 
   override def handleMsg: PartialFunction[Any, Future[Any]] = {
     case x => agentOrchestrator.handleMsg(x)
@@ -21,3 +22,5 @@ class AgencyAgentWrapper(val commonParam: CommonParam) extends Agent {
     agentOrchestrator.stop()
   }
 }
+
+

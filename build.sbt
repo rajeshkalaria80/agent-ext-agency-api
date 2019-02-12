@@ -245,5 +245,20 @@ lazy val transportProtocol = (project in file("transport-protocol")).
     debianPackageDependencies in Debian ++= Seq("default-jre")
   ).dependsOn(common % "test -> test; compile -> compile")
 
+lazy val agency = (project in file("agency")).
+  enablePlugins(DebianPlugin).
+  settings(
+    name := "agency",
+    packageSummary := "agency",
+    packageDescription := "Scala and Akka package to run agency",
+    libraryDependencies ++= commonLibraryDependencies,
+    commonTestSettings("agency"),
+    commonSettings,
+    commonPackageSettings(s"$targetDirPathPrefix"),
+    //libindy provides libindy.so
+    debianPackageDependencies in Debian ++= Seq("default-jre", "libindy(>= 1.6.8)")
+  ).dependsOn(businessProtocol % "test->test; compile->compile", transportProtocol % "test->test; compile->compile")
+
+
 Revolver.settings
 

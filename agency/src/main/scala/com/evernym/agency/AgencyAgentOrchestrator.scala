@@ -1,8 +1,9 @@
-package com.evernym.extension.agency.protocol.agent
+package com.evernym.agency
 
 import com.evernym.agent.api._
 import com.evernym.agent.common.actor.ActorRefResolver
 import com.evernym.extension.agency.protocol.business.AgencyBusinessProtocol
+import com.evernym.extension.agency.protocol.transport.AgencyTransportProtocol
 
 import scala.concurrent.Future
 
@@ -18,6 +19,12 @@ class AgencyAgentOrchestrator(val commonParam: CommonParam) extends AgentOrchest
     protocols += agencyBusinessProtocol
   }
 
+  private def startAgencyAgentTransportProtocol(): Unit = {
+    val transportProtocol = new AgencyTransportProtocol(commonParam, handleMsg)
+    transportProtocol.start()
+    protocols += transportProtocol
+  }
+
   override def handleMsg: PartialFunction[Any, Future[Any]] = {
     case tam: TransportMsg => agencyBusinessProtocol.handleMsg(tam)
     case x => Future.failed(throw new NotImplementedError(s"messages not supported: $x"))
@@ -25,6 +32,7 @@ class AgencyAgentOrchestrator(val commonParam: CommonParam) extends AgentOrchest
 
   override def start(inputParam: Option[Any]=None): Unit = {
     startAgencyAgentBusinessProtocol()
+    startAgencyAgentTransportProtocol()
   }
 
   override def stop(): Unit = {
